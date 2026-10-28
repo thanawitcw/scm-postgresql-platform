@@ -1,0 +1,59 @@
+# ---------------------------------
+# Python
+# ---------------------------------
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+
+# ---------------------------------
+# Secrets / environment
+# ---------------------------------
+.env
+*.env
+!.env.example
+
+# ---------------------------------
+# Business data, outputs, logs
+# ---------------------------------
+*.xlsx
+*.xls
+*.xlsb
+*.accdb
+*.dump
+*.log
+
+**/data/raw/**
+**/data/processed/**
+**/data/output/**
+**/data/stock_report/**
+!**/data/raw/**/
+!**/data/processed/**/
+!**/data/output/**/
+!**/data/stock_report/**/
+!**/data/raw/**/.gitkeep
+!**/data/processed/.gitkeep
+!**/data/output/.gitkeep
+
+ops/snapshot/
+ops/logs/
+
+# ---------------------------------
+# R
+# ---------------------------------
+.Rhistory
+.RData
+.Rproj.user/
+
+# ---------------------------------
+# OS / editors
+# ---------------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
