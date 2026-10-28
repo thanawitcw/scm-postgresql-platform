@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCM Data Platform — Pipeline Summary</title>
+<style>
+  :root {
+    --bg:       #0d1117;
+    --bg2:      #161b22;
+    --bg3:      #21262d;
+    --border:   #30363d;
+    --text:     #c9d1d9;
+    --muted:    #8b949e;
+    --blue:     #58a6ff;
+    --green:    #3fb950;
+    --orange:   #d29922;
+    --red:      #f85149;
+    --purple:   #bc8cff;
+    --teal:     #39d353;
+    --yellow:   #e3b341;
+    --font:     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+    --mono:     'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+  nav {
+    width: 230px;
+    min-width: 230px;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 20px 0;
+  }
+  nav .logo { padding: 0 16px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  nav .logo h1 { font-size: 13px; font-weight: 700; color: var(--blue); line-height: 1.3; }
+  nav .logo span { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
+  nav a { display: block; padding: 6px 16px; color: var(--muted); text-decoration: none; font-size: 13px; border-left: 2px solid transparent; transition: all 0.15s; }
+  nav a:hover { color: var(--text); background: var(--bg3); }
+  nav a.active { color: var(--blue); border-left-color: var(--blue); background: rgba(88,166,255,0.06); }
+  nav .nav-group { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 14px 16px 4px; }
+  main { flex: 1; padding: 32px 40px; max-width: 1200px; }
+  section { margin-bottom: 56px; }
+  section h2 { font-size: 20px; font-weight: 600; color: var(--text); padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  section h2 .icon { font-size: 18px; }
+  section h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 24px 0 10px; }
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; }
+  pre { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; font-family: var(--mono); font-size: 12px; overflow-x: auto; margin: 10px 0; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stat-card .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: var(--blue); margin: 4px 0 2px; line-height: 1; }
+  .stat-card .sub { font-size: 12px; color: var(--muted); }
+  .tech-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .tech-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 12px; color: var(--text); }
+  .tech-badge.blue { border-color: rgba(88,166,255,0.4); color: var(--blue); }
+  .tech-badge.green { border-color: rgba(63,185,80,0.4); color: var(--green); }
+  .tech-badge.orange { border-color: rgba(210,153,34,0.4); color: var(--orange); }
+  .tech-badge.purple { border-color: rgba(188,140,255,0.4); color: var(--purple); }
+  .schema-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .schema-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .schema-card h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .schema-card p { font-size: 12px; color: var(--muted); }
+  .schema-dim h4 { color: var(--blue); }
+  .schema-fact h4 { color: var(--orange); }
+  .schema-stg h4 { color: var(--purple); }
+  .schema-rpt h4 { color: var(--teal); }
+  .table-group { margin-bottom: 24px; }
+  .table-group-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 6px 12px; border-radius: 4px; margin-bottom: 8px; display: inline-block; }
+  .label-dim  { background: rgba(88,166,255,0.15);  color: var(--blue); }
+  .label-fact { background: rgba(210,153,34,0.15);  color: var(--orange); }
+  .label-stg  { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .label-rpt  { background: rgba(57,211,83,0.15);   color: var(--teal); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+  thead th { background: var(--bg3); color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid rgba(48,54,61,0.5); }
+  tbody tr:hover { background: rgba(33,38,45,0.6); }
+  tbody td { padding: 8px 12px; vertical-align: top; }
+  td.mono { font-family: var(--mono); font-size: 12px; }
+  td.num { text-align: right; font-family: var(--mono); color: var(--muted); }
+  td.big-num { text-align: right; font-family: var(--mono); color: var(--orange); font-weight: 600; }
+  .row-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-family: var(--mono); color: var(--muted); }
+  .row-badge.big { color: var(--orange); border-color: rgba(210,153,34,0.3); }
+  .row-badge.med { color: var(--blue); border-color: rgba(88,166,255,0.3); }
+  .row-badge.small { color: var(--muted); }
+  .col-table { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+  .col-table-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg3); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+  .col-table-header:hover { background: rgba(33,38,45,0.8); }
+  .col-table-header .name { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .col-table-header .meta { font-size: 11px; color: var(--muted); display: flex; gap: 12px; align-items: center; }
+  .col-table-header .chevron { color: var(--muted); transition: transform 0.2s; }
+  .col-table-header.open .chevron { transform: rotate(90deg); }
+  .col-table-body { display: none; }
+  .col-table-body.open { display: block; }
+  .col-table-body table { margin: 0; }
+  .col-table-body thead th { background: transparent; }
+  .type-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 1px 5px; font-size: 11px; font-family: var(--mono); color: var(--purple); }
+  .null-yes { color: var(--muted); font-size: 12px; }
+  .null-no { color: var(--text); font-size: 12px; }
+  .view-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 8px; }
+  .view-card .view-name { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--text); }
+  .view-card .view-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .proc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 10px; }
+  .proc-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .proc-card .proc-name { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text); }
+  .proc-card .proc-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .proc-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 3px; margin-bottom: 6px; }
+  .proc-badge.populate  { background: rgba(88,166,255,0.15); color: var(--blue); }
+  .proc-badge.refresh   { background: rgba(63,185,80,0.15);  color: var(--green); }
+  .proc-badge.validate  { background: rgba(210,153,34,0.15); color: var(--orange); }
+  .proc-badge.utility   { background: rgba(188,140,255,0.15);color: var(--purple); }
+  .script-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+  .script-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+  .script-card .script-name { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--blue); }
+  .script-card .script-desc { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+  .script-badge { display: inline-block; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; margin-bottom: 6px; }
+  .script-badge.load { background: rgba(63,185,80,0.15); color: var(--green); }
+  .script-badge.orchestrate { background: rgba(210,153,34,0.15); color: var(--orange); }
+  .script-badge.utility { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .script-badge.python { background: rgba(57,211,83,0.1); color: var(--teal); }
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 0; margin: 20px 0; font-size: 12px; }
+  .flow-step { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 14px; text-align: center; min-width: 110px; }
+  .flow-step .step-num { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .flow-step .step-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .flow-step .step-desc { font-size: 11px; color: var(--muted); }
+  .flow-arrow { color: var(--muted); padding: 0 6px; font-size: 16px; }
+  .tree { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; font-family: var(--mono); font-size: 12px; line-height: 1.9; }
+  .tree .dir  { color: var(--blue); }
+  .tree .file { color: var(--text); }
+  .tree .muted { color: var(--muted); }
+  .tree .py { color: var(--teal); }
+  .tree .ps1 { color: var(--orange); }
+  .info-box { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); border-radius: 6px; padding: 12px 16px; font-size: 13px; color: var(--text); margin-bottom: 16px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="logo">
+    <h1>SCM Data Platform</h1>
+    <span>PostgreSQL 18 &middot; native service &middot; D:\pgdata</span>
+  </div>
+  <div class="nav-group">Overview</div>
+  <a href="#overview">Project Overview</a>
+  <a href="#flow">Data Flow</a>
+  <a href="#schemas">Schemas</a>
+  <div class="nav-group">Database</div>
+  <a href="#tables">Tables</a>
+  <a href="#columns">Key Columns</a>
+  <a href="#views">Views</a>
+  <div class="nav-group">ETL</div>
+  <a href="#commands">Daily Commands</a>
+  <a href="#history">History / Fix Commands</a>
+  <a href="#logs">Logs</a>
+  <a href="#folders">Folder Structure</a>
+  <div class="nav-group">Automation</div>
+  <a href="#auto">Schedule &amp; Alerts</a>
+  <a href="#runbook">Runbook</a>
+  <div class="nav-group">History</div>
+  <a href="#changelog">Build Log 2026-10-05/06</a>
+</nav>
+
+<main>
+
+<section id="overview">
+  <h2><span class="icon">📊</span> Project Overview</h2>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="label">Fact Rows</div><div class="value">7.71M</div><div class="sub">Sales 1.76M · DC stock 4.34M · Progrid 566K · Plan 593K · Weekly 273K · OOS 86K · GR 89K</div></div>
+    <div class="stat-card"><div class="label">DB Objects</div><div class="value">30</div><div class="sub">12 core · 9 stg · 4 ops · 5 rpt views</div></div>
+    <div class="stat-card"><div class="label">RPT Views</div><div class="value">5</div><div class="sub">bestprice · changes · effective periods · unmapped · freshness</div></div>
+    <div class="stat-card"><div class="label">CLI Commands</div><div class="value">11</div><div class="sub">validate + 9 loads + health (+ 6 history loaders)</div></div>
+    <div class="stat-card"><div class="label">Data Sources</div><div class="value">11</div><div class="sub">S1–S5, S7–S12 (S6 retired)</div></div>
+    <div class="stat-card"><div class="label">Migrations</div><div class="value">0011</div><div class="sub">head: 0011_oos_status · zero new-version policy</div></div>
+  </div>
+  <div class="info-box">As of <strong>2026-10-06</strong>: every live datasource piped, daily schedule green (Mon–Fri 10:00, validate-first, Teams cards). Single source of truth for Supply Chain, consumed by Power BI via <code>rpt.*</code> only. Next: <code>v_supply_chain_so_vs_plan</code> variance view.</div>
+  <div class="tech-list">
+    <span class="tech-badge blue">PostgreSQL 18.4 (native service)</span>
+    <span class="tech-badge blue">Python 3.12 + uv</span>
+    <span class="tech-badge green">psycopg v3 · SQLAlchemy 2 · Alembic</span>
+    <span class="tech-badge orange">Power BI (Import)</span>
+    <span class="tech-badge purple">Task Scheduler + Teams cards</span>
+    <span class="tech-badge">SQL transforms (pandas = parsing only)</span>
+  </div>
+</section>
+
+<section id="flow">
+  <h2><span class="icon">🔄</span> Data Flow</h2>
+  <div class="flow">
+    <div class="flow-step"><div class="step-num">0</div><div class="step-name">Validate</div><div class="step-desc">etl validate, 9 checks</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">1</div><div class="step-name">Extract</div><div class="step-desc">share files, pinned</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">2</div><div class="step-name">Stage</div><div class="step-desc">TRUNCATE + COPY</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">3</div><div class="step-name">Transform</div><div class="step-desc">SQL in one tx</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">4</div><div class="step-name">Contract</div><div class="step-desc">rpt.* views</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><div class="step-num">5</div><div class="step-name">Consume</div><div class="step-desc">Power BI + Teams card</div></div>
+  </div>
+  <div class="info-box"><strong>Rules that hold everywhere:</strong> one transaction per load (DELETE+INSERT+DQ, one COMMIT) · DDL only from Alembic, never from a load · idempotent re-runs · orphans/quarantine load with WARN, never silently dropped · <code>~$</code> lock files skipped centrally · extract failures write FAILED run rows naming the datasource.</div>
+</section>
+
+<section id="schemas">
+  <h2><span class="icon">🗂</span> Schemas</h2>
+  <div class="schema-grid">
+    <div class="schema-card schema-stg"><h4>stg — Staging</h4><p>Raw, close to source, disposable. Truncate-then-load every run. Never read by dashboards. 9 tables.</p></div>
+    <div class="schema-card schema-dim"><h4>core — Base layer</h4><p>Typed, constrained, Alembic-owned. 5 dims (<code>dim_date, dim_dc, dim_channel, dim_supplier, dim_item</code>) + 7 facts. Engine-owned, never ad-hoc.</p></div>
+    <div class="schema-card schema-rpt"><h4>rpt — Contract</h4><p>The ONLY surface consumers may read. Versioned <code>.sql</code> files. Business logic lives here, not in DAX.</p></div>
+    <div class="schema-card schema-fact"><h4>ops — Provenance</h4><p><code>etl_run</code> (every load attempt), <code>dq_result</code> (WARN/ERROR), <code>dataset</code> (file hashes), <code>promotion_change_log</code>, 30 progrid snapshots.</p></div>
+  </div>
+</section>
+
+<section id="tables">
+  <h2><span class="icon">🗃</span> Tables</h2>
+  <div class="table-group">
+    <div class="table-group-header label-dim">core — Dimensions</div>
+    <table><thead><tr><th>Table</th><th>Purpose</th><th style="text-align:right">Rows</th><th style="text-align:right">Cols</th></tr></thead><tbody>
+      <tr><td class="mono">core.dim_date</td><td style="color:var(--muted);font-size:12px">Date spine 2025-01-01 → 2030-12-31, Thai/Buddhist years. Pre-2025 promos drop whole (owner ruling).</td><td class="num"><span class="row-badge med">2,191</span></td><td class="num">15</td></tr>
+      <tr><td class="mono">core.dim_item</td><td style="color:var(--muted);font-size:12px">2-column map: one row per cj_item, supplier names concatenated. Facts join the natural key.</td><td class="num"><span class="row-badge med">2,612</span></td><td class="num">3</td></tr>
+      <tr><td class="mono">core.dim_supplier</td><td style="color:var(--muted);font-size:12px">S9 master, blank placeholder filtered, Type-1 upsert.</td><td class="num"><span class="row-badge small">511</span></td><td class="num">10</td></tr>
+      <tr><td class="mono">core.dim_dc</td><td style="color:var(--muted);font-size:12px">D001/D002/D004/D005 → DC1/DC2/DC4/DC5 (+ TOTAL concept for weekly).</td><td class="num"><span class="row-badge small">4</span></td><td class="num">4</td></tr>
+      <tr><td class="mono">core.dim_channel</td><td style="color:var(--muted);font-size:12px">CJ / TD sellout discriminator (real dimension, not free text).</td><td class="num"><span class="row-badge small">2</span></td><td class="num">4</td></tr>
+    </tbody></table>
+  </div>
+  <div class="table-group">
+    <div class="table-group-header label-fact">core — Facts</div>
+    <table><thead><tr><th>Table</th><th>Purpose</th><th style="text-align:right">Rows</th><th style="text-align:right">Cols</th></tr></thead><tbody>
+      <tr><td class="mono">core.fact_daily_sales</td><td style="color:var(--muted);font-size:12px">Promo-attributed grain (date × item × channel × type × theme × price × is_main). Pattern A per month. CJ+TD, 43 windows. No audit cols (D37).</td><td class="num"><span class="row-badge big">1.76M</span></td><td class="num">9</td></tr>
+      <tr><td class="mono">core.fact_daily_dc_stock</td><td style="color:var(--muted);font-size:12px">Daily snapshots (date × dc × item), 649 days. Negatives clamped to 0, non-200 quarantined. No audit cols (D37).</td><td class="num"><span class="row-badge big">4.34M</span></td><td class="num">5</td></tr>
+      <tr><td class="mono">core.fact_running_progrid</td><td style="color:var(--muted);font-size:12px">Faithful generate_series expansion of non-cancelled promos (NOT a resolution). Policy-A cancellation.</td><td class="num"><span class="row-badge big">566K</span></td><td class="num">14</td></tr>
+      <tr><td class="mono">core.fact_demandfc_history</td><td style="color:var(--muted);font-size:12px">Raw mirror, 9 snapshots (append mode, key-exact replace). Renamed from fact_sales_plan (D38); audit cols kept. pro_type kept verbatim for rpt-time normalization.</td><td class="num"><span class="row-badge big">593K</span></td><td class="num">13</td></tr>
+      <tr><td class="mono">core.fact_weekly_stock</td><td style="color:var(--muted);font-size:12px">Wide, 92 Mondays, APPEND-only weeks. DC5 0-filled pre-2026-05-18.</td><td class="num"><span class="row-badge med">273K</span></td><td class="num">50</td></tr>
+      <tr><td class="mono">core.fact_goods_receipt</td><td style="color:var(--muted);font-size:12px">Annual files, SUM-dedup on grain, DC-resolved. Received-date indexed for Power BI. No audit cols (D37).</td><td class="num"><span class="row-badge med">89K</span></td><td class="num">7</td></tr>
+      <tr><td class="mono">core.fact_oos_status</td><td style="color:var(--muted);font-size:12px">Raw wide mirror, grain (date × item × shm_item). Serial-date parser, DC5 0-fill numerics.</td><td class="num"><span class="row-badge med">86K</span></td><td class="num">80</td></tr>
+    </tbody></table>
+  </div>
+  <div class="table-group">
+    <div class="table-group-header label-stg">stg — Staging (last load each)</div>
+    <table><thead><tr><th>Table</th><th>Source</th><th style="text-align:right">Rows</th><th style="text-align:right">Cols</th></tr></thead><tbody>
+      <tr><td class="mono">stg.stg_csv_daily_sales</td><td style="color:var(--muted);font-size:12px">Latest sellout month (S3/S4 shared, channel-tagged).</td><td class="num"><span class="row-badge med">18,150</span></td><td class="num">12</td></tr>
+      <tr><td class="mono">stg.stg_progrid_raw</td><td style="color:var(--muted);font-size:12px">Every S1+S2 row incl. cancelled (trimmed 15 cols).</td><td class="num"><span class="row-badge med">15,820</span></td><td class="num">15</td></tr>
+      <tr><td class="mono">stg.stg_demandfc_history</td><td style="color:var(--muted);font-size:12px">Last load frames (truncate-then-load); fact appends by forecast_month_key. Renamed from stg_sales_plan (D38).</td><td class="num"><span class="row-badge big">76K</span></td><td class="num">13</td></tr>
+      <tr><td class="mono">stg.stg_dc_daily</td><td style="color:var(--muted);font-size:12px">Last DC file incl. quarantined rows (file-faithful).</td><td class="num"><span class="row-badge med">8,187</span></td><td class="num">7</td></tr>
+      <tr><td class="mono">stg.stg_goods_receipt</td><td style="color:var(--muted);font-size:12px">Both annual S5 files.</td><td class="num"><span class="row-badge med">87,470</span></td><td class="num">9</td></tr>
+      <tr><td class="mono">stg.stg_product_list</td><td style="color:var(--muted);font-size:12px">S8 Access dump (59 cols).</td><td class="num"><span class="row-badge med">2,723</span></td><td class="num">61</td></tr>
+      <tr><td class="mono">stg.stg_supplier_list</td><td style="color:var(--muted);font-size:12px">S9 Access dump.</td><td class="num"><span class="row-badge small">511</span></td><td class="num">11</td></tr>
+      <tr><td class="mono">stg.stg_weekly_stock</td><td style="color:var(--muted);font-size:12px">Last weekly file (wide, NULL DC5).</td><td class="num"><span class="row-badge med">1,657</span></td><td class="num">50</td></tr>
+      <tr><td class="mono">stg.stg_oos_status</td><td style="color:var(--muted);font-size:12px">Last OOS file (wide raw).</td><td class="num"><span class="row-badge small">947</span></td><td class="num">80</td></tr>
+    </tbody></table>
+  </div>
+</section>
+
+<section id="columns">
+  <h2><span class="icon">🔍</span> Key Columns</h2>
+  <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Click any table to expand. Grain keys first.</p>
+
+  <div class="col-table"><div class="col-table-header" onclick="toggleCols(this)"><span class="name"><span class="table-group-header label-fact" style="font-size:10px;padding:2px 6px">core</span> <span style="font-family:var(--mono)">fact_daily_sales</span></span><span class="meta"><span>9 columns</span><span style="color:var(--orange)">1.76M rows</span><span class="chevron">▶</span></span></div><div class="col-table-body"><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Nullable</th><th>Notes</th></tr></thead><tbody>
+  <tr><td class="num">1</td><td class="mono">sales_date 🔑</td><td><span class="type-badge">date</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">grain + dim_date</td></tr>
+  <tr><td class="num">2</td><td class="mono">cj_item 🔑</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">natural key, orphans load</td></tr>
+  <tr><td class="num">3</td><td class="mono">channel_key 🔑</td><td><span class="type-badge">bigint</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">FK → dim_channel</td></tr>
+  <tr><td class="num">4</td><td class="mono">pro_type 🔑</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">upper-folded</td></tr>
+  <tr><td class="num">5</td><td class="mono">pro_theme 🔑</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">upper-folded</td></tr>
+  <tr><td class="num">6</td><td class="mono">pro_price_in_vat 🔑</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">0-sentinel NULLed</td></tr>
+  <tr><td class="num">7</td><td class="mono">so_qty_piece</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">additive</td></tr>
+  <tr><td class="num">8</td><td class="mono">so_amt_in_vat</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">additive</td></tr>
+  <tr><td class="num">9</td><td class="mono">is_main 🔑</td><td><span class="type-badge">boolean</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">Main vs promo-attributed row</td></tr>
+  </tbody></table></div></div>
+
+  <div class="col-table"><div class="col-table-header" onclick="toggleCols(this)"><span class="name"><span class="table-group-header label-fact" style="font-size:10px;padding:2px 6px">core</span> <span style="font-family:var(--mono)">fact_daily_dc_stock</span></span><span class="meta"><span>5 columns</span><span style="color:var(--orange)">4.34M rows</span><span class="chevron">▶</span></span></div><div class="col-table-body"><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Nullable</th><th>Notes</th></tr></thead><tbody>
+  <tr><td class="num">1</td><td class="mono">stock_date 🔑</td><td><span class="type-badge">date</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">grain, from Calendar Day %d.%m.%Y</td></tr>
+  <tr><td class="num">2</td><td class="mono">dc_key 🔑</td><td><span class="type-badge">bigint</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">FK → dim_dc (D001→DC1…)</td></tr>
+  <tr><td class="num">3</td><td class="mono">cj_item 🔑</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">200%-only in fact</td></tr>
+  <tr><td class="num">4</td><td class="mono">stock_qty</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">negatives clamped to 0 (D24)</td></tr>
+  <tr><td class="num">5</td><td class="mono">stock_value</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">clamped to 0</td></tr>
+  </tbody></table></div></div>
+
+  <div class="col-table"><div class="col-table-header" onclick="toggleCols(this)"><span class="name"><span class="table-group-header label-fact" style="font-size:10px;padding:2px 6px">core</span> <span style="font-family:var(--mono)">fact_running_progrid</span></span><span class="meta"><span>14 columns</span><span style="color:var(--orange)">566K rows</span><span class="chevron">▶</span></span></div><div class="col-table-body"><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Nullable</th><th>Notes</th></tr></thead><tbody>
+  <tr><td class="num">1</td><td class="mono">sales_date 🔑</td><td><span class="type-badge">date</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">exploded day</td></tr>
+  <tr><td class="num">2</td><td class="mono">cj_item 🔑</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  <tr><td class="num">3</td><td class="mono">rsp_unit 🔑</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">PIECE mostly</td></tr>
+  <tr><td class="num">4</td><td class="mono">rsp</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  <tr><td class="num">5</td><td class="mono">pro_type</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">free text since D21</td></tr>
+  <tr><td class="num">6</td><td class="mono">pro_theme</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  <tr><td class="num">7</td><td class="mono">promo_price_per_piece</td><td><span class="type-badge">numeric</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  <tr><td class="num">8</td><td class="mono">valid_from 🔑</td><td><span class="type-badge">date</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">slot_key part; pre-2025 dropped</td></tr>
+  <tr><td class="num">9</td><td class="mono">valid_to</td><td><span class="type-badge">date</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  <tr><td class="num">10</td><td class="mono">slot_key</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">cj|unit|valid_from</td></tr>
+  <tr><td class="num">11</td><td class="mono">promo_row_id 🔑</td><td><span class="type-badge">bigint</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">per-load only, never a cross-load key</td></tr>
+  <tr><td class="num">12</td><td class="mono">is_cancelled</td><td><span class="type-badge">boolean</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">Policy A never_ran excluded</td></tr>
+  <tr><td class="num">13</td><td class="mono">uploaded_at</td><td><span class="type-badge">timestamptz</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">snapshot stamp</td></tr>
+  <tr><td class="num">14</td><td class="mono">source_file</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  </tbody></table></div></div>
+
+  <div class="col-table"><div class="col-table-header" onclick="toggleCols(this)"><span class="name"><span class="table-group-header label-dim" style="font-size:10px;padding:2px 6px">core</span> <span style="font-family:var(--mono)">dim_item + dim_supplier</span></span><span class="meta"><span>3 + 10 columns</span><span style="color:var(--orange)">2,612 / 511 rows</span><span class="chevron">▶</span></span></div><div class="col-table-body"><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Nullable</th><th>Notes</th></tr></thead><tbody>
+  <tr><td class="num">1</td><td class="mono">dim_item.item_key 🔑</td><td><span class="type-badge">bigint</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">identity, unused by facts</td></tr>
+  <tr><td class="num">2</td><td class="mono">dim_item.cj_item 🔑</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">UNIQUE, the join spine</td></tr>
+  <tr><td class="num">3</td><td class="mono">dim_item.supplier_name</td><td><span class="type-badge">text</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">comma-concatenated variants</td></tr>
+  <tr><td class="num">4</td><td class="mono">dim_supplier.supplier_key 🔑</td><td><span class="type-badge">bigint</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px"></td></tr>
+  <tr><td class="num">5</td><td class="mono">dim_supplier.supplier_code 🔑</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">UNIQUE</td></tr>
+  <tr><td class="num">6</td><td class="mono">dim_supplier.supplier_name/type/status/credit_term/country/division</td><td><span class="type-badge">mixed</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">Type-1 overwrite</td></tr>
+  </tbody></table></div></div>
+
+  <div class="col-table"><div class="col-table-header" onclick="toggleCols(this)"><span class="name"><span class="table-group-header label-fact" style="font-size:10px;padding:2px 6px">ops</span> <span style="font-family:var(--mono)">etl_run + dq_result</span></span><span class="meta"><span>11 + 7 columns</span><span class="chevron">▶</span></span></div><div class="col-table-body"><table><thead><tr><th>#</th><th>Column</th><th>Type</th><th>Nullable</th><th>Notes</th></tr></thead><tbody>
+  <tr><td class="num">1</td><td class="mono">etl_run.run_id 🔑</td><td><span class="type-badge">uuid</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">RUNNING row written first</td></tr>
+  <tr><td class="num">2</td><td class="mono">etl_run.pipeline / target_table</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">what + where, incl. extract failures</td></tr>
+  <tr><td class="num">3</td><td class="mono">etl_run.status</td><td><span class="type-badge">text</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">RUNNING|SUCCESS|FAILED|SKIPPED</td></tr>
+  <tr><td class="num">4</td><td class="mono">etl_run.rows_in / rows_out / error_text</td><td><span class="type-badge">mixed</span></td><td class="null-yes">NULL</td><td style="color:var(--muted);font-size:12px">error_text appended, never overwritten</td></tr>
+  <tr><td class="num">5</td><td class="mono">dq_result.check_name / severity / passed / observed</td><td><span class="type-badge">mixed</span></td><td class="null-no">NOT NULL</td><td style="color:var(--muted);font-size:12px">WARN loads, ERROR rolls back</td></tr>
+  </tbody></table></div></div>
+</section>
+
+<section id="views">
+  <h2><span class="icon">👁</span> Views (rpt — the only consumer surface)</h2>
+  <div class="view-card"><div><div class="view-name">rpt.v_freshness</div><div class="view-desc">One row per loaded table: data_through, row_count, last_loaded_at, coverage_lag_days, is_stale (per-source thresholds 3d→45d). First stop for every dashboard.</div></div></div>
+  <div class="view-card"><div><div class="view-name">rpt.v_fact_progrid_bestprice</div><div class="view-desc">Resolved promo price, 1 row per date × item × unit (443K rows). Lowest price wins; MAIL only on ties. A view, not a table (Rule M11).</div></div></div>
+  <div class="view-card"><div><div class="view-name">rpt.v_promotion_changes</div><div class="view-desc">Change log aggregated to promotion level at query time (ADDED / PROMO CANCELLED / PRICE UP-DOWN, TYPE-THEME CHANGED, DATES EXTENDED-CUT, old/new promo window + dates_verdict).</div></div></div>
+  <div class="view-card"><div><div class="view-name">rpt.v_promotion_effective_periods</div><div class="view-desc">Gaps-and-islands: when a promotion was actually the applied price.</div></div></div>
+  <div class="view-card"><div><div class="view-name">rpt.v_unmapped_values</div><div class="view-desc">pro_types outside the 7 canonical values (currently 14-DAYS, 7-DAYS_*, 3-DAYS). Business-classification watchlist.</div></div></div>
+</section>
+
+<section id="commands">
+  <h2><span class="icon">⚙️</span> Daily Commands (steady state)</h2>
+  <div class="info-box">Run from <code><repo root></code> with machine-level <code>PG*</code> env set. Or run <code>powershell -File ops\daily_run.ps1</code> for all of them (Mon–Fri 10:00 scheduled).</div>
+  <div class="script-grid">
+    <div class="script-card"><span class="script-badge load">Validate</span><div class="script-name">python -m etl validate</div><div class="script-desc">9 source checks, zero DB writes. Fix FAILs at source first.</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl run --date YYYY-MM-DD</div><div class="script-desc">Reference dims from Access (S8/S9).</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-latest --channel CJ|TD</div><div class="script-desc">Newest sellout month only; SKIP if hash unchanged.</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-progrid</div><div class="script-desc">Archive S1+S2 (keeps 30) → explode → diff log.</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-gr</div><div class="script-desc">Latest annual GR file only.</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-plan</div><div class="script-desc">Latest plan snapshot only (append mode: delete its forecast_month_key + insert).</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-weekly-stock</div><div class="script-desc">Latest Monday file only (append-only).</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-oos-status</div><div class="script-desc">Latest OOS snapshot only.</div></div>
+    <div class="script-card"><span class="script-badge load">Load</span><div class="script-name">python -m etl load-dc-stock --file "DC_End05-10-2026.xlsx"</div><div class="script-desc">One snapshot by <strong>exact filename</strong> (root + history folders): delete its date + insert. Re-upload = same call.</div></div>
+  </div>
+</section>
+
+<section id="history">
+  <h2><span class="icon">🕘</span> History / Fix Commands (manual only, never scheduled)</h2>
+  <div class="info-box">Backfills and single-unit fixes. Each is idempotent; each logs to <code>ops.etl_run</code> like a normal load.</div>
+  <div class="script-grid">
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl load-month --channel CJ --month YYYY-MM <em>or</em> --file "2026_9.Daily_Sep.csv"</div><div class="script-desc">One sellout month by <strong>month or exact filename</strong> (Pattern A rewrite).</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl load-dc-stock --file "DC_End05-10-2026.xlsx"</div><div class="script-desc">One DC snapshot by <strong>exact filename</strong> (root + history folders): delete its date + insert. Same call as daily.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl load-gr --file "2025_Summary_GR.csv"</div><div class="script-desc">One GR year by <strong>exact filename</strong> (year-scoped replace — other years untouched).</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl load-weekly-stock --file "2026_10.Oct 05-10-2026.xlsx"</div><div class="script-desc">One week by <strong>exact filename</strong> (week-scoped delete + insert around the append guard).</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl load-oos-status --file "2026_9.Sep 28-09-2026.xlsx"</div><div class="script-desc">One OOS snapshot by <strong>exact filename</strong>: check DB → delete its week → insert. Re-upload = same call.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl load-plan --file "2026_09.RunningProGrid_AsOf_FCMonth.csv"</div><div class="script-desc">One plan snapshot by <strong>exact filename</strong> (key-exact delete + insert on forecast_month_key — other snapshots untouched).</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl.history.sellout</div><div class="script-desc">All (channel, month) windows missing from the fact. Excluded from the CLI app.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl.history.dc_daily</div><div class="script-desc">All file-dates missing (year folders + root). Excluded from the CLI app.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl.history.goods_receipt</div><div class="script-desc">All annual GR files (full replace). Excluded from the CLI app.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl.history.sales_plan</div><div class="script-desc">All plan snapshots (append mode, key-exact replace). Excluded from the CLI app.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl.history.weekly_stock</div><div class="script-desc">All missing Monday weeks (append-only). Excluded from the CLI app.</div></div>
+    <div class="script-card"><span class="script-badge orchestrate">Backfill</span><div class="script-name">python -m etl.history.oos_status</div><div class="script-desc">All missing OOS weeks. Excluded from the CLI app.</div></div>
+  </div>
+</section>
+
+<section id="logs">
+  <h2><span class="icon">📋</span> Logs</h2>
+  <div class="info-box">File logs in <code>ops\logs\daily_YYYYMMDD.log</code> (one per daily run, GREEN/RED footer). Database truth in <code>ops.etl_run</code> (every attempt, incl. extract failures) + <code>ops.dq_result</code> (WARN loads / ERROR rolls back) + <code>ops.dataset</code> (filename + sha256 per source).</div>
+  <table><thead><tr><th>Log</th><th>Written by</th></tr></thead><tbody>
+    <tr><td class="mono">ops\logs\daily_YYYYMMDD.log</td><td style="font-size:12px;color:var(--muted)">daily_run.ps1 — per-step OK/SKIP/FAILED + GREEN/RED + Teams post</td></tr>
+    <tr><td class="mono">ops.etl_run</td><td style="font-size:12px;color:var(--muted)">run_pipeline + extract_guarded — pipeline, target, status, rows, error_text</td></tr>
+    <tr><td class="mono">ops.dq_result</td><td style="font-size:12px;color:var(--muted)">pipelines — check_name, severity, passed, observed/expected</td></tr>
+    <tr><td class="mono">ops.dataset</td><td style="font-size:12px;color:var(--muted)">CLI — dataset_key, file_name, content_hash, business min/max ( powers SKIP logic)</td></tr>
+    <tr><td class="mono">ops\snapshot\&lt;stamp&gt;\</td><td style="font-size:12px;color:var(--muted)">progrid archive — 30 retained, manifest.json per snapshot</td></tr>
+  </tbody></table>
+</section>
+
+<section id="folders">
+  <h2><span class="icon">📁</span> Folder Structure</h2>
+  <div class="tree">
+    <span class="dir"><repo root>\</span>  <span class="muted">— repo root</span><br>
+    <span class="muted">├──</span> <span class="dir">etl\</span>  <span class="muted">— pipeline code</span><br>
+    <span class="muted">│   ├──</span> <span class="py">cli.py</span>  <span class="muted">— 11 commands (validate + loads)</span><br>
+    <span class="muted">│   ├──</span> <span class="py">validate.py</span>  <span class="muted">— pre-load gate, 9 checks</span><br>
+    <span class="muted">│   ├──</span> <span class="dir">sources\</span>  <span class="muted">— one module per source + scan.py (~$ rule)</span><br>
+    <span class="muted">│   ├──</span> <span class="dir">pipelines\</span>  <span class="muted">— one module per target table</span><br>
+    <span class="muted">│   ├──</span> <span class="dir">history\</span>  <span class="muted">— 6 backfill loaders (never scheduled)</span><br>
+    <span class="muted">│   └──</span> <span class="py">runlog.py</span>  <span class="muted">— etl_run/dataset writers</span><br>
+    <span class="muted">├──</span> <span class="dir">sql\rpt\</span>  <span class="muted">— 5 versioned contract views</span><br>
+    <span class="muted">├──</span> <span class="dir">alembic\versions\</span>  <span class="muted">— 0001 → 0011 (head)</span><br>
+    <span class="muted">├──</span> <span class="dir">ops\</span>  <span class="muted">— daily_run, register_task, backup, snapshot/, logs/</span><br>
+    <span class="muted">├──</span> <span class="ps1">ARCHITECTURE.md</span>  <span class="muted">— design + D1–D38 decision log</span><br>
+    <span class="muted">└──</span> <span class="file">SCM_Project_Structure.html</span>  <span class="muted">— this page</span><br>
+    <br>
+    <span class="dir">D:\pgdata\</span>  <span class="muted">— PostgreSQL cluster (moved from C: 2026-10-06)</span><br>
+    <span class="muted">└──</span> <span class="dir">D:\pg_backup\</span>  <span class="muted">— nightly dumps, 14-day retention</span><br>
+  </div>
+</section>
+
+<section id="auto">
+  <h2><span class="icon">🤖</span> Schedule &amp; Alerts</h2>
+  <div class="proc-grid">
+    <div class="proc-card"><span class="proc-badge populate">Scheduled</span><div class="proc-name">SCM-ETL-Daily-1000 — Mon–Fri 10:00</div><div class="proc-desc"><code>ops\daily_run.ps1</code>: validate-first (aborts on FAIL), then dims → sellout ×2 → progrid → GR → plan → weekly → OOS → latest DC file. Weekend guard, per-step log, exit = failed-step count. Machine-level <code>PG*</code> env required.</div></div>
+    <div class="proc-card"><span class="proc-badge populate">Scheduled</span><div class="proc-name">SCM-Backup-Nightly — daily 01:00</div><div class="proc-desc"><code>ops\backup.ps1</code>: <code>pg_dump -Fc</code> to <code>D:\pg_backup\</code>, 14-day retention. Fails fast without <code>PGPASSWORD</code> (never hangs on a prompt). Restore drill passed 2026-10-06 (38 s).</div></div>
+    <div class="proc-card"><span class="proc-badge refresh">Alerts</span><div class="proc-name">Teams GREEN/RED Adaptive Cards</div><div class="proc-desc">Table-style card per run (STEP | RESULT) via Power Automate webhook (<code>SCM_TEAMS_WEBHOOK</code>, machine env). Skipped gracefully when unset.</div></div>
+    <div class="proc-card"><span class="proc-badge validate">Gate</span><div class="proc-name">etl validate — 9 checks, zero writes</div><div class="proc-desc">Access contract, sellout parse+channel, progrid sheets, GR/weekly/DC/plan/OOS latest files. Daily step 0 and manual pre-check.</div></div>
+  </div>
+</section>
+
+<section id="runbook">
+  <h2><span class="icon">🛠️</span> Runbook &amp; Open Items</h2>
+  <table><thead><tr><th>Symptom</th><th>Do this</th></tr></thead><tbody>
+    <tr><td>Daily card RED: validate FAILED</td><td>Read the FAIL lines in <code>ops\logs\daily_*.log</code> — fix at source (drift, missing file, bad date), rerun <code>daily_run.ps1</code>. Nothing loaded.</td></tr>
+    <tr><td>Daily card RED: a load FAILED</td><td>Query <code>ops.etl_run</code> for <code>error_text</code> (names pipeline + table + file). Fix, rerun the single command (all idempotent).</td></tr>
+    <tr><td>FATAL missing env</td><td>Machine-level <code>PG*</code> vars absent in that process. Set once elevated; fresh shells/tasks inherit.</td></tr>
+    <tr><td>Mislabeled file (content date ≠ filename)</td><td>Load fails naming the file (cf. 23/24-07-2025). Get owner to reissue; reload with <code>--date</code>/<code>--file</code>.</td></tr>
+    <tr><td>Someone editing share files mid-load</td><td><code>~$</code> locks are skipped; torn reads fail loudly. Ask owner to edit on copies.</td></tr>
+    <tr><td>Suspected bad unit (month / week / file)</td><td>Reload exactly it by filename: <code>load-month --channel CJ --file "..."</code>, <code>load-dc-stock --file "..."</code>, <code>load-oos-status --file "..."</code>, <code>load-plan --file "..."</code>, <code>load-gr --file "..."</code>, <code>load-weekly-stock --file "..."</code>.</td></tr>
+    <tr><td>Move to a new laptop</td><td>Install PG18 + ACE + venv from <code>uv.lock</code>; <code>createdb</code> + <code>pg_restore</code> latest dump (or <code>alembic upgrade head</code> for schema-only); set machine env; register the 2 tasks.</td></tr>
+  </tbody></table>
+  <div class="info-box" style="margin-top:16px"><strong>Open items:</strong> (1) <code>v_supply_chain_so_vs_plan</code> variance view (needs plan pro_type normalization). (2) TLS still off (D12) — 15 min + one restart. (3) Per-person reporting logins pending consumer list. (4) Integration tests for 6 pipelines. (5) <code>7-DAYS_*/3-DAYS/14-DAYS</code> await owner classification. (6) Delete <code>&lt;old backup&gt;</code> after a green run on D:.</div>
+</section>
+
+<section id="changelog">
+  <h2><span class="icon">🗓</span> Build Log 2026-10-05/06</h2>
+  <div class="proc-grid">
+    <div class="proc-card"><span class="proc-badge refresh">Changed</span><div class="proc-name">2026-10-14 — fact audit trim + plan rename (D37/D38)</div><div class="proc-desc"><code>loaded_at</code>/<code>source_file</code> dropped from <code>fact_daily_sales</code> (9 cols), <code>fact_daily_dc_stock</code> (5 cols), <code>fact_goods_receipt</code> (7 cols); <code>stg</code> keeps both. <code>fact_sales_plan</code> → <code>fact_demandfc_history</code>, <code>stg_sales_plan</code> → <code>stg_demandfc_history</code> (13 cols kept). Live DDL + reloads verified, counts unchanged.</div></div>
+    <div class="proc-card"><span class="proc-badge populate">Built</span><div class="proc-name">All 11 sources piped (~7.65M fact rows)</div><div class="proc-desc">S1–S5, S7–S12. Sellout 43 windows; DC 649 days; weekly 92 weeks; OOS 89 weeks; plan 9 snapshots (append mode); progrid 566K days + change log; GR reconciled stg↔fact to the unit.</div></div>
+    <div class="proc-card"><span class="proc-badge populate">Built</span><div class="proc-name">Steady-state / history split + validate gate</div><div class="proc-desc">Latest-only dailies with hash SKIP; 6 history loaders parked in <code>etl/history/</code>; <code>etl validate</code> (9/9) runs first in the daily job and aborts on FAIL.</div></div>
+    <div class="proc-card"><span class="proc-badge populate">Built</span><div class="proc-name">Schedule, Teams, backup, docs</div><div class="proc-desc">Mon–Fri 10:00 + nightly dump (drill-passed) + table-style Teams cards. <code>rpt.v_freshness</code> live. ARCHITECTURE.md decisions D17–D38; this page.</div></div>
+    <div class="proc-card"><span class="proc-badge refresh">Moved</span><div class="proc-name">Cluster C: → D:\pgdata</div><div class="proc-desc">2.8 GB, registry repoint, verified counts + resumed tasks. <code>.bak</code> removal pending a green D: run.</div></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  function toggleCols(header) {
+    header.classList.toggle('open');
+    const body = header.nextElementSibling;
+    body.classList.toggle('open');
+  }
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const link = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -75% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
